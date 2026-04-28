@@ -94,5 +94,6 @@ This project helps in understanding how C++ can be used to build a real-world in
 ---
 
 👨‍💻 **AUTHOR**
-Kishu
+KRISHA PATEL
+25CS068
 C++ Mini Project
