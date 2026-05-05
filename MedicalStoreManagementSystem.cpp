@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
 
-// Base Class
+//Base Class
 class Medicine {
 protected:
     int id;
@@ -25,35 +25,29 @@ public:
         quantity -= q;
     }
 
-    virtual void display() {
-        cout << id << " " << name << " " << price << " " << quantity;
-    }
+    // Virtual Function (Abstraction)
+    virtual void display() = 0;
 };
 
-// Tablet Derived Class
+// Tablet Class
 class Tablet : public Medicine {
 public:
     void display() {
-        cout << "[Tablet] ";
-        Medicine::display();
-        cout << endl;
+        cout << "[Tablet] " << id << " " << name << " " << price << " " << quantity << endl;
     }
 };
 
-//Syrup-Derived Class
+// Syrup Class
 class Syrup : public Medicine {
 public:
     void display() {
-        cout << "[Syrup] ";
-        Medicine::display();
-        cout << endl;
+        cout << "[Syrup] " << id << " " << name << " " << price << " " << quantity << endl;
     }
 };
 
-// Main System Class
+//Medical Store System
 class MedicalStore {
-    Medicine m[100];
-    int type[100]; // 1 = Tablet, 2 = Syrup
+    Medicine* m[100];
     int count;
 
 public:
@@ -69,8 +63,13 @@ public:
         cout << "Enter ID Name Price Qty: ";
         cin >> id >> n >> p >> q;
 
-        m[count].setData(id, n, p, q);
-        type[count] = 1;
+        if(q <= 0 || p <= 0) {
+            cout << "Invalid input!\n";
+            return;
+        }
+
+        m[count] = new Tablet();
+        m[count]->setData(id, n, p, q);
         count++;
 
         cout << "Tablet Added!\n";
@@ -84,22 +83,28 @@ public:
         cout << "Enter ID Name Price Qty: ";
         cin >> id >> n >> p >> q;
 
-        m[count].setData(id, n, p, q);
-        type[count] = 2;
+        if(q <= 0 || p <= 0) {
+            cout << "Invalid input!\n";
+            return;
+        }
+
+        m[count] = new Syrup();
+        m[count]->setData(id, n, p, q);
         count++;
 
         cout << "Syrup Added!\n";
     }
 
     void viewAll() {
-        for(int i = 0; i < count; i++) {
-            if(type[i] == 1)
-                cout << "[Tablet] ";
-            else
-                cout << "[Syrup] ";
+        if(count == 0) {
+            cout << "No medicines available!\n";
+            return;
+        }
 
-            m[i].display();
-            cout << endl;
+        cout << "\n--- Medicine List ---\n";
+        for(int i = 0; i < count; i++) {
+            cout << i << ". ";
+            m[i]->display();   // polymorphism
         }
     }
 
@@ -110,52 +115,71 @@ public:
         cout << "Enter ID: ";
         cin >> id;
 
-        for(int i = 0; i < count; i++) {
-            if(m[i].getId() == id) {
-                if(type[i] == 1)
-                    cout << "[Tablet] ";
-                else
-                    cout << "[Syrup] ";
+        cout << "\n--- Search Result ---\n";
 
-                m[i].display();
-                cout << endl;
+        for(int i = 0; i < count; i++) {
+            if(m[i]->getId() == id) {
+                m[i]->display();   // polymorphism
                 found = true;
             }
         }
 
-        if(!found) cout << "Not found!\n";
+        if(!found)
+            cout << "Medicine not found!\n";
     }
 
     void billing() {
-        int id, qty, t;
+        int id, qty, choice;
+        bool found = false;
 
-        cout << "Enter ID & Qty: ";
-        cin >> id >> qty;
+        cout << "Enter ID: ";
+        cin >> id;
 
-        cout << "Type (1=Tablet, 2=Syrup): ";
-        cin >> t;
+        cout << "\nAvailable Medicines:\n";
 
         for(int i = 0; i < count; i++) {
-            if(m[i].getId() == id && type[i] == t) {
-
-                if(qty > m[i].getQty()) {
-                    cout << "Not enough stock!\n";
-                    return;
-                }
-
-                float total = m[i].getPrice() * qty;
-
-                cout << "\n--- BILL ---\n";
-                m[i].display();
-                cout << "\nQty: " << qty;
-                cout << "\nTotal: " << total << endl;
-
-                m[i].reduceStock(qty);
-                return;
+            if(m[i]->getId() == id) {
+                cout << i << ". ";
+                m[i]->display();
+                found = true;
             }
         }
 
-        cout << "Medicine not found!\n";
+        if(!found) {
+            cout << "Medicine not found!\n";
+            return;
+        }
+
+        cout << "Select index: ";
+        cin >> choice;
+
+        if(choice < 0 || choice >= count || m[choice]->getId() != id) {
+            cout << "Invalid selection!\n";
+            return;
+        }
+
+        cout << "Enter Quantity: ";
+        cin >> qty;
+
+        if(qty <= 0) {
+            cout << "Invalid quantity!\n";
+            return;
+        }
+
+        if(qty > m[choice]->getQty()) {
+            cout << "Not enough stock!\n";
+            return;
+        }
+
+        float total = m[choice]->getPrice() * qty;
+
+        cout << "\n--- BILL ---\n";
+        m[choice]->display();
+        cout << "Qty: " << qty << endl;
+        cout << "Total: " << total << endl;
+
+        m[choice]->reduceStock(qty);
+        cout << "Stock updated!\n";
     }
 };
 
@@ -169,6 +193,11 @@ int main() {
         cout << "1 Add Tablet\n2 Add Syrup\n3 View\n4 Search\n5 Billing\n6 Exit\n";
         cout << "Enter: ";
         cin >> ch;
+
+        if(ch < 1 || ch > 6) {
+            cout << "Invalid choice!\n";
+            continue;
+        }
 
         switch(ch) {
             case 1: obj.addTablet(); break;
